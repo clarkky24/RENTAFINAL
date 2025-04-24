@@ -18,6 +18,7 @@ const cron = require('node-cron');
 const Tenant = require('./modelSchema/tenantSchema');
 const moment = require('moment-timezone');
 const sendPendingPaymentReminder = require('./Routes/notificationRoute');
+const path = require('path');
 
 // NEW: Require revenue snapshot utility and model
 const { calculateRevenueSnapshot } = require('./modelSchema/revenueUtil');
@@ -47,6 +48,9 @@ app.use('/api/revenue', revenueRoute);
 app.use('/api/apply', applyRoutes);
 app.use('/api', transactionRoute);
 app.use('/uploads', express.static('uploads'));
+
+
+
 
 // Cron job: Update tenants' paymentStatus if lease ends in 5 days or less
 cron.schedule('* * * * *', async () => {

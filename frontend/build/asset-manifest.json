@@ -1,0 +1,26 @@
+{
+  "files": {
+    "main.css": "/static/css/main.d22e3eb8.css",
+    "main.js": "/static/js/main.6a6628ec.js",
+    "static/js/453.abd36b29.chunk.js": "/static/js/453.abd36b29.chunk.js",
+    "static/media/affordable.png": "/static/media/affordable.9e83a5845a7dcdb4e888.png",
+    "static/media/Pet.png": "/static/media/Pet.f9c3b406a034921637cb.png",
+    "static/media/Maintenance.png": "/static/media/Maintenance.cb3fa5dbd7bc903b28f7.png",
+    "static/media/cozy.png": "/static/media/cozy.b76a80efb0647e4c0f5f.png",
+    "static/media/transport.png": "/static/media/transport.743b961f35f153ffcae7.png",
+    "static/media/career.png": "/static/media/career.15e9dfd4c0488d7afe99.png",
+    "static/media/24_7.png": "/static/media/24_7.37045088565a264ff3ad.png",
+    "static/media/payment.png": "/static/media/payment.def3b4706334541916d1.png",
+    "static/media/Dashboard.png": "/static/media/Dashboard.05545c35c68031c741a0.png",
+    "static/media/1st.png": "/static/media/1st.0050d3856fe258a1ad12.png",
+    "static/media/apartment.png": "/static/media/apartment.4752b6bac7ca5fa7c7ff.png",
+    "index.html": "/index.html",
+    "main.d22e3eb8.css.map": "/static/css/main.d22e3eb8.css.map",
+    "main.6a6628ec.js.map": "/static/js/main.6a6628ec.js.map",
+    "453.abd36b29.chunk.js.map": "/static/js/453.abd36b29.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.d22e3eb8.css",
+    "static/js/main.6a6628ec.js"
+  ]
+}
