@@ -21,24 +21,23 @@ const SignupPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+  
+    // 1. Make sure they've agreed to T&C
     if (!term) {
       setTermError("You must agree to the Terms and Conditions to proceed.");
       return;
     }
     setTermError("");
   
-    // Wait for the signup function to complete
-    await signup(name, email, password, role);
+    // 2. Try signing up (this returns true on success, false on error)
+    const success = await signup(name, email, password, role);
   
-    // If there is no error, navigate based on the role.
-    if (!error) {
-      if (role === 'tenant') {
-        navigate('/'); // Redirect tenants to the /home route
-      } else {
-        // For other roles, provide a different redirect or a default route.
-        navigate('/');
-      }
+    // 3. On success, always go to /home
+
+    if (success) {
+      navigate("/home", { replace: true });
     }
+    // If it failed (e.g. “Email already in use”), your `error` message will show below
   };
 
   const handleTermAndCondition = (event) => {

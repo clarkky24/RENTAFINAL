@@ -36,7 +36,8 @@ const userLogin = async (req, res) => {
     res.status(200).json({ 
       message: 'User logged in successfully', 
       email: user.email, 
-      role: user.role 
+      role: user.role,
+  
     });
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -45,26 +46,55 @@ const userLogin = async (req, res) => {
 
 
 // User signup
+// const userSignup = async (req, res) => {
+//   const { email, password, name, role } = req.body;
+
+//   try {
+//     const user = await User.signup(email, password, name, role);
+
+//     // Create a token for the new user
+//     const token = createToken(user._id);
+
+//     //cookie
+//     res.cookie('jwt', token, {
+//       httpOnly: true,
+//       secure: process.env.NODE_ENV === 'production',  // HTTPS only in production
+//       sameSite: 'Lax',
+//       path: '/',
+//       maxAge: 3 * 24 * 60 * 60 * 1000, // 3 days
+//   });
+//       // Redirect the user to the /home area after signup
+//         // Redirect the user to the /home area after signup
+        
+//     res.status(201).json({ message: 'User registered successfully', user: user._id });
+//   } catch (error) {
+//     res.status(400).json({ error: error.message });
+//   }
+// };
+
 const userSignup = async (req, res) => {
   const { email, password, name, role } = req.body;
 
   try {
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ error: 'Email already in use' });
+    }
+
+    // Proceed with signup
     const user = await User.signup(email, password, name, role);
 
-    // Create a token for the new user
     const token = createToken(user._id);
 
-    //cookie
     res.cookie('jwt', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',  // HTTPS only in production
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'Lax',
       path: '/',
-      maxAge: 3 * 24 * 60 * 60 * 1000, // 3 days
-  });
-      // Redirect the user to the /home area after signup
-        // Redirect the user to the /home area after signup
-        
+      maxAge: 3 * 24 * 60 * 60 * 1000,
+    });
+
     res.status(201).json({ message: 'User registered successfully', user: user._id });
   } catch (error) {
     res.status(400).json({ error: error.message });

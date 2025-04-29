@@ -1,14 +1,34 @@
+require('dotenv').config();
+const axios = require('axios');                // for reCAPTCHA verification
 const Apply = require('../modelSchema/applySchema');
 const { default: mongoose } = require('mongoose');
-
 const { sendEmailNotification } = require('../modelSchema/notificationSchema'); 
 
 // Create a new application
-
 const createApplication = async (req, res) => {
   try {
-    const { building, roomNumber, fullName, email, contactNumber } = req.body;
-    
+    // Extract form data + reCAPTCHA token
+    const { building, roomNumber, fullName, email, contactNumber, recaptchaToken } = req.body;
+
+    // 1️⃣ Ensure token is present
+    if (!recaptchaToken) {
+      return res.status(400).json({ error: 'reCAPTCHA token missing' });
+    }
+
+    // 2️⃣ Verify token with Google
+    const secret = process.env.RECAPTCHA_SECRET;
+    const verifyUrl = 'https://www.google.com/recaptcha/api/siteverify';
+    const { data: captchaRes } = await axios.post(
+      verifyUrl,
+      null,
+      { params: { secret, response: recaptchaToken } }
+    );
+
+    if (!captchaRes.success) {
+      console.error('reCAPTCHA failed:', captchaRes['error-codes']);
+      return res.status(400).json({ error: 'Failed reCAPTCHA verification' });
+    }
+
     // Create and save a new application document
     const application = new Apply({
       building,
@@ -113,9 +133,9 @@ const deleteApplication = async (req, res) => {
 };
 
 module.exports = {
-createApplication,
-getApplications,
-getApplicationById,
-updateApplicationStatus,
-deleteApplication
-}
+  createApplication,
+  getApplications,
+  getApplicationById,
+  updateApplicationStatus,
+  deleteApplication,
+};

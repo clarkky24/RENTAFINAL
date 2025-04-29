@@ -317,7 +317,7 @@ const MaintenanceRequestDialog = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-black text-blue-950 mb-1">
-                          Requestor Name
+                          Requestor Email
                         </label>
                         <input
                           type="text"
@@ -536,7 +536,7 @@ const MaintenanceRequestDialog = () => {
                     <span className="font-black bg-green-100">{request.roomNumber}</span>
                   </p>
                   <p>
-                    <span className="font-semibold text-blue-950 uppercase font-quicksand">Requested By: </span> 
+                    <span className="font-semibold text-blue-950 uppercase font-quicksand">Requestor Email: </span> 
                     <span className="font-bold tracking-widest bg-green-100">{request.tenantName}</span>
                   </p>
                   <p>

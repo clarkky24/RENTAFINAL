@@ -27,8 +27,10 @@ export const useSignup = () => {
             // Update the auth context with user ID from response
             dispatch({ type: 'LOGIN', payload:  json});
 
+            return true;   
         } catch (err) {
             setError(err.message); // Set error message
+            return false;
         } finally {
             setIsLoading(false); // Always set loading to false at the end
         }

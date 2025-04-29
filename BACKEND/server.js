@@ -29,7 +29,7 @@ const app = express();
 
 // Middleware 
 app.use(cors({
-  origin: 'https://rentafinal-5yh3.vercel.app'
+  origin: 'http://localhost:3000' 
 }));
 app.use(express.json());
 app.use(bodyParser.json());
