@@ -27,6 +27,7 @@ import { useAuthContext } from '../Hook/useAuthHook';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import emailjs from 'emailjs-com';
+import CommentIcon from '@mui/icons-material/Comment';
 
 
 
@@ -49,6 +50,41 @@ export default function TenantsPage() {
   const [viewProof, setViewProof] = useState(null);
   const navigate = useNavigate();
   const { user } = useAuthContext();
+
+
+const [openRemarkDialog, setOpenRemarkDialog] = useState(false);
+const [remarkTenant,    setRemarkTenant]    = useState(null);
+const [remarkText,      setRemarkText]      = useState('');
+const [isEditingRemark, setIsEditingRemark] = useState(false);
+
+const handleOpenRemarkDialog = (tenant) => {
+  setRemarkTenant(tenant);
+  setRemarkText(tenant.remark || '');
+  setOpenRemarkDialog(true);
+};
+const handleCloseRemarkDialog = () => {
+  setOpenRemarkDialog(false);
+  setRemarkTenant(null);
+  setRemarkText('');
+};
+const handleSaveRemark = async () => {
+  try {
+    const res = await axios.put(`/api/tenants/${remarkTenant._id}`, {
+      ...remarkTenant,
+      remark: remarkText
+    });
+    // update local state
+    setTenants(t =>
+      t.map(x => x._id === remarkTenant._id ? res.data : x)
+    );
+    toast.success('Remark saved!');
+  } catch (err) {
+    console.error(err);
+    toast.error('Could not save remark');
+  } finally {
+    handleCloseRemarkDialog();
+  }
+};
 
 
 
@@ -510,6 +546,7 @@ const handleMarkAsPaid = async () => {
                         'Lease End',
                         'Rent Amount',
                         'Payment Status',
+                        'Remarks',
                         'Statement',
                         'Action',
                       ].map((header) => (
@@ -526,7 +563,7 @@ const handleMarkAsPaid = async () => {
                     {currentTenants.length > 0 ? (
                       currentTenants.map((tenant) => (
                         <tr key={tenant._id} className="border-t">
-                          <td className="px-4 py-6 mb:px-2 mb:py-3 tb:px-3 tb:py-4 font-medium text-sm tracking-wide border border-blue-900">
+                          <td className="px-4 py-6 mb:px-2 mb:py-3 tb:px-3 tb:py-4 font-bold text-sm tracking-wide border border-blue-900">
                             {editingTenantId === tenant._id ? (
                               <TextField
                                 name="name"
@@ -539,7 +576,7 @@ const handleMarkAsPaid = async () => {
                               tenant.name
                             )}
                           </td>
-                          <td className="px-4 py-2 mb:px-2 mb:py-2 tb:px-3 tb:py-3 font-medium text-sm tracking-wide border border-blue-900">
+                          <td className="px-4 py-2 mb:px-2 mb:py-2 tb:px-3 tb:py-3 font-bold text-sm tracking-wide border border-blue-900">
                             {editingTenantId === tenant._id ? (
                               <TextField
                                 name="email"
@@ -552,7 +589,7 @@ const handleMarkAsPaid = async () => {
                               tenant.email
                             )}
                           </td>
-                          <td className="px-4 py-2 mb:px-2 mb:py-2 tb:px-3 tb:py-3 font-medium text-sm tracking-wide border border-blue-900">
+                          <td className="px-4 py-2 mb:px-2 mb:py-2 tb:px-3 tb:py-3 font-bold text-sm tracking-wide border border-blue-900">
                             {editingTenantId === tenant._id ? (
                               <TextField
                                 name="phone"
@@ -565,7 +602,7 @@ const handleMarkAsPaid = async () => {
                               tenant.phone
                             )}
                           </td>
-                          <td className="px-4 py-2 mb:px-2 mb:py-2 tb:px-3 tb:py-3 font-medium text-sm tracking-wide border border-blue-900">
+                          <td className="px-4 py-2 mb:px-2 mb:py-2 tb:px-3 tb:py-3 font-bold text-sm tracking-wide border border-blue-900">
                             {editingTenantId === tenant._id ? (
                               <select
                                 name="property"
@@ -581,7 +618,7 @@ const handleMarkAsPaid = async () => {
                               tenant.property
                             )}
                           </td>
-                          <td className="px-4 py-2 mb:px-2 mb:py-2 tb:px-3 tb:py-3 font-medium text-sm tracking-wide border border-blue-900">
+                          <td className="px-4 py-2 mb:px-2 mb:py-2 tb:px-3 tb:py-3 font-bold text-sm tracking-wide border border-blue-900">
                             {editingTenantId === tenant._id ? (
                               <select
                                 name="roomNumber"
@@ -600,7 +637,7 @@ const handleMarkAsPaid = async () => {
                               tenant.roomNumber
                             )}
                           </td>
-                          <td className="px-4 py-2 mb:px-2 mb:py-2 tb:px-3 tb:py-3 font-medium text-sm tracking-wide border border-blue-900">
+                          <td className="px-4 py-2 mb:px-2 mb:py-2 tb:px-3 tb:py-3 font-bold text-sm tracking-wide border border-blue-900">
                             {editingTenantId === tenant._id ? (
                               <TextField
                                 name="leaseStartDate"
@@ -616,7 +653,7 @@ const handleMarkAsPaid = async () => {
                                 .replace(',', '')
                             )}
                           </td>
-                          <td className="px-4 py-2 mb:px-2 mb:py-2 tb:px-3 tb:py-3 font-medium text-sm tracking-wide border border-blue-900">
+                          <td className="px-4 py-2 mb:px-2 mb:py-2 tb:px-3 tb:py-3 font-bold text-sm tracking-wide border border-blue-900">
                             {editingTenantId === tenant._id ? (
                               <TextField
                                 name="leaseEndDate"
@@ -632,20 +669,24 @@ const handleMarkAsPaid = async () => {
                                 .replace(',', '')
                             )}
                           </td>
-                          <td className="px-4 py-2 mb:px-2 mb:py-2 tb:px-3 tb:py-3 font-medium text-sm tracking-wide border border-blue-900">
+                            <td className="px-4 py-2 mb:px-2 mb:py-2 tb:px-3 tb:py-3 font-bold text-sm tracking-wide border border-blue-900">
                             {editingTenantId === tenant._id ? (
                               <TextField
                                 name="rentAmount"
-                                value={editedTenantData.rentAmount || ''}
+                                // keep the raw value in edit mode so the user can type freely:
+                                value={editedTenantData.rentAmount ?? ''}
                                 onChange={handleChange}
                                 variant="outlined"
                                 size="small"
                               />
+                            ) : tenant.rentAmount != null ? (
+                              // only call toFixed if it's really a number
+                              `₱${Number(tenant.rentAmount).toFixed(2)}`
                             ) : (
-                              tenant.rentAmount
+                              '—'  // fallback when no amount is set
                             )}
                           </td>
-                          <td className="px-4 py-2 mb:px-2 mb:py-2 tb:px-3 tb:py-3 font-medium text-sm tracking-wide border border-blue-900">
+                          <td className="px-4 py-2 mb:px-2 mb:py-2 tb:px-3 tb:py-3 font-bold text-sm tracking-wide border border-blue-900">
                             <span
                               className={`
                                 ${tenant.paymentStatus === "Pending" ? "bg-orange-400 text-red-950 py-1 px-2 rounded-xl uppercase font-playfair font-black" : 
@@ -658,7 +699,20 @@ const handleMarkAsPaid = async () => {
                               {tenant.paymentStatus}
                             </span>
                           </td>
-                          <td className=" mb:px-2 mb:py-2 tb:px-3 tb:py-3 font-xl text-sm tracking-wide border border-blue-900">
+                          <td className="px-12 mb:px-2 mb:py-2 tb:px-3 tb:py-3 font-xl text-sm tracking-wide border border-blue-900">
+                            <CommentIcon
+                              className="cursor-pointer text-xl text-blue-600 hover:text-gray-800"
+                              onClick={() => {
+                                setRemarkTenant(tenant);
+                                setRemarkText(tenant.remark || '');
+                                setIsEditingRemark(!tenant.remark); // auto‐open edit if no remark
+                                setOpenRemarkDialog(true);
+                              }}
+                              titleAccess={tenant.remark ? 'View remark' : 'Add remark'}
+                            />
+                          </td>
+
+                          <td className="px-0 mb:px-2 mb:py-2 tb:px-3 tb:py-3 font-xl text-sm tracking-wide border border-blue-900">
                             <EventNoteIcon
                               className="text-blue-500 cursor-pointer text-2xl mx-3 hover:text-blue-700 transition"
                               onClick={() => handleOpenCurrentStatementDialog(tenant)}
@@ -1103,6 +1157,116 @@ const handleMarkAsPaid = async () => {
     </div>
   </div>
 )}
+<Dialog
+  open={openRemarkDialog}
+  onClose={() => {
+    setOpenRemarkDialog(false);
+    setIsEditingRemark(false);
+  }}
+  maxWidth="sm"
+  fullWidth
+>
+  <DialogTitle>
+    {remarkTenant
+      ? `${remarkTenant.remark ? 'Remark for' : 'Add remark for'} ${remarkTenant.name}`
+      : 'Remark'}
+  </DialogTitle>
+
+  <DialogContent dividers>
+    {remarkTenant && !isEditingRemark && remarkTenant.remark ? (
+      // **VIEW MODE**: show saved text
+      <DialogContentText style={{ whiteSpace: 'pre-wrap' }}>
+        {remarkText}
+      </DialogContentText>
+    ) : (
+      // **EDIT / CREATE MODE**: multiline text field
+      <TextField
+        autoFocus
+        margin="dense"
+        label="Remark"
+        type="text"
+        fullWidth
+        multiline
+        rows={4}
+        value={remarkText}
+        onChange={(e) => setRemarkText(e.target.value)}
+      />
+    )}
+  </DialogContent>
+
+  <DialogActions>
+    {/* Always allow closing */}
+    <Button
+      onClick={() => {
+        setOpenRemarkDialog(false);
+        setIsEditingRemark(false);
+      }}
+    >
+      {(!remarkTenant?.remark || isEditingRemark) ? 'Cancel' : 'Close'}
+    </Button>
+
+    {remarkTenant && remarkTenant.remark && !isEditingRemark && (
+      <>
+        {/* VIEW MODE: edit or delete */}
+        <Button onClick={() => setIsEditingRemark(true)}>
+          Edit
+        </Button>
+        <Button
+          color="error"
+          onClick={async () => {
+            try {
+              const res = await axios.put(
+                `/api/tenants/${remarkTenant._id}`,
+                { ...remarkTenant, remark: '' }
+              );
+              setTenants(ts =>
+                ts.map(t =>
+                  t._id === res.data._id ? res.data : t
+                )
+              );
+              toast.success('Remark deleted');
+            } catch {
+              toast.error('Could not delete remark');
+            } finally {
+              setOpenRemarkDialog(false);
+              setIsEditingRemark(false);
+            }
+          }}
+        >
+          Delete
+        </Button>
+      </>
+    )}
+
+    {( !remarkTenant?.remark || isEditingRemark ) && (
+      // SAVE button in CREATE or EDIT mode
+      <Button
+        variant="contained"
+        onClick={async () => {
+          try {
+            const res = await axios.put(
+              `/api/tenants/${remarkTenant._id}`,
+              { ...remarkTenant, remark: remarkText }
+            );
+            setTenants(ts =>
+              ts.map(t =>
+                t._id === res.data._id ? res.data : t
+              )
+            );
+            toast.success('Remark saved');
+          } catch {
+            toast.error('Could not save remark');
+          } finally {
+            setOpenRemarkDialog(false);
+            setIsEditingRemark(false);
+          }
+        }}
+      >
+        Save
+      </Button>
+    )}
+  </DialogActions>
+</Dialog>
 
 
 

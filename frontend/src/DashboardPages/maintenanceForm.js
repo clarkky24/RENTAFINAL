@@ -9,6 +9,12 @@ import { useAuthContext } from '../Hook/useAuthHook';
 import { ToastContainer, toast } from 'react-toastify';
 import emailjs from 'emailjs-com';
 
+const SERVICE_ID = 'service_e99wa6g';
+const TEMPLATE_ID = 'template_5zd0ds4';
+const TEMPLATE_ID2 = 'template_0flk8ok'
+const PUBLIC_KEY = '0fWtIeW7Pi_ZP4CPt';
+
+
 const MaintenanceRequestDialog = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -18,11 +24,11 @@ const MaintenanceRequestDialog = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuthContext();
 
-  const SERVICE_ID = 'service_moe2i0p';
-  const TEMPLATE_ID = 'template_zbqg15f';
-  const PUBLIC_KEY = 'cBIKEtZRngFRjeWOq';
+
+
 
   // For demo purposes - in production, this should come from auth context
  // const [isAdmin] = useState(true);
@@ -89,23 +95,79 @@ const MaintenanceRequestDialog = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
-      if (isEditMode) {
-        await axios.put(`http://localhost:4000/api/request/${selectedRequest._id}`, formData);
-      } else {
-        await axios.post('http://localhost:4000/api/request', formData);
-      }
-      
-      await fetchRequests();
-      setIsOpen(false);
-      resetForm();
-    } catch (error) {
-      console.error('Error submitting the form:', error.response?.data || error.message);
+  setIsSubmitting(true);
+  try {
+    if (isEditMode) {
+      // 1) update on your backend
+      await axios.put(
+        `http://localhost:4000/api/request/${selectedRequest._id}`,
+        formData
+      );
+
+      // 2) then send an “updated” email
+      const updateParams = {
+        user_name: formData.tenantName,
+        request_title: formData.requestTitle,
+        property: formData.property,
+        room_number: formData.roomNumber,
+        priority: formData.priority,
+        service: formData.preferredDate,
+        status: formData.status,
+        message: formData.description,
+        to_email: formData.tenantName 
+      };
+
+      await emailjs.send(
+        SERVICE_ID,
+        TEMPLATE_ID2,
+        updateParams,
+        PUBLIC_KEY
+      );
+      toast.success(`Update email sent to ${formData.tenantEmail}`);
+
+    } else {
+      // your existing “new request” flow
+      const response = await axios.post(
+        'http://localhost:4000/api/request',
+        formData
+      );
+
+      const createParams = {
+        user_name: formData.tenantName,
+        request_title: formData.requestTitle,
+        property: formData.property,
+        room_number: formData.roomNumber,
+        priority: formData.priority,
+        service: formData.preferredDate,
+        status: formData.status,
+        message: formData.description,
+        to_email: formData.tenantName 
+      };
+
+      await emailjs.send(
+        SERVICE_ID,
+        TEMPLATE_ID,
+        createParams,
+        PUBLIC_KEY
+      );
+      toast.success(`Confirmation email sent to ${formData.tenantEmail}`);
     }
-  };
 
+    await fetchRequests();
+    setIsOpen(false);
+    resetForm();
+
+  } catch (err) {
+    console.error('Error submitting the form:', err.response?.data || err.message);
+    toast.error('Failed to submit request or send email.');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
+  
 
   const handleEdit = (request) => {
     setSelectedRequest(request);
@@ -369,19 +431,29 @@ const MaintenanceRequestDialog = () => {
                       
                     {/* Dialog Footer */}
                     <div className="flex justify-end space-x-4 pt-4">
-                      <button
-                        type="button"
-                        onClick={() => setIsOpen(false)}
-                        className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        Submit Request
-                      </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsOpen(false)}
+                      className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className={`px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500
+                        ${isSubmitting
+                          ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
+                          : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                    >
+                      {isSubmitting
+                        ? isEditMode
+                          ? 'Updating…'
+                          : 'Submitting…'
+                        : isEditMode
+                        ? 'Update Request'
+                        : 'Submit Request'}
+                    </button>
                     </div>
 
                     {/* Add Status field for admin */}

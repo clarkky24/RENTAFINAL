@@ -1,13 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Grid, Box, Card, CardContent, Typography, Button, IconButton } from '@mui/material';
-import ApartmentIcon from '@mui/icons-material/Apartment'; // Ensure you have this imported
+import {
+  Grid,
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  Button,
+  IconButton
+} from '@mui/material';
+import ApartmentIcon from '@mui/icons-material/Apartment';
 import axios from 'axios';
 import RoomCard from '../DashboardPages/roomcard';
-import { Link } from 'react-router-dom'; // Added for navigation
+import { Link } from 'react-router-dom';
 
 const AvailRoom = () => {
   const [rooms, setRooms] = useState([]);
   const [selectedBuilding, setSelectedBuilding] = useState(null);
+  const [showAvailableOnly, setShowAvailableOnly] = useState(false);
 
   useEffect(() => {
     const fetchTenantData = async () => {
@@ -17,29 +26,29 @@ const AvailRoom = () => {
 
         const allRooms = [
           { property: 'Lalaine', totalRooms: 28 },
-          { property: 'Jade', totalRooms: 30 },
+          { property: 'Jade', totalRooms: 30 }
         ];
 
-        const roomsData = allRooms.flatMap((building) =>
+        const roomsData = allRooms.flatMap(building =>
           Array.from({ length: building.totalRooms }, (_, i) => {
-            const floorNumber = Math.floor(i / 10) + 1; // Floors start from 1
-            const roomPosition = (i % 10) + 1;          // Room positions start from 1
-            const roomNumber = `${floorNumber}${String(roomPosition).padStart(2, '0')}`; // Format as 101, 201, etc.
-            // Match tenant data to room
+            const floorNumber = Math.floor(i / 10) + 1;
+            const roomPosition = (i % 10) + 1;
+            const roomNumber = `${floorNumber}${String(roomPosition).padStart(2, '0')}`;
             const tenant = tenants.find(
-              (tenant) =>
-                tenant.roomNumber === roomNumber &&
-                tenant.property.toLowerCase() === building.property.toLowerCase()
+              t =>
+                t.roomNumber === roomNumber &&
+                t.property.toLowerCase() === building.property.toLowerCase()
             );
 
-            // Debug log to verify room assignments
-            console.log(`Building: ${building.property}, Room: ${roomNumber}, Is Rented: ${!!tenant}`);
+            console.log(
+              `Building: ${building.property}, Room: ${roomNumber}, Is Rented: ${!!tenant}`
+            );
 
             return {
               roomNumber,
               isRented: !!tenant,
               property: building.property,
-              tenant: tenant || null,
+              tenant: tenant || null
             };
           })
         );
@@ -53,10 +62,21 @@ const AvailRoom = () => {
     fetchTenantData();
   }, []);
 
-  const filteredRooms = rooms.filter(room => room.property === selectedBuilding);
-  const handleBuildingClick = (building) => {
-    setSelectedBuilding(selectedBuilding === building ? null : building);
+  const handleBuildingClick = building => {
+    setSelectedBuilding(prev =>
+      prev === building ? null : building
+    );
+    setShowAvailableOnly(false);
   };
+
+  // Rooms in the selected building...
+  const filteredRooms = rooms.filter(
+    room => room.property === selectedBuilding
+  );
+  // ...and if toggled, only the available ones
+  const displayedRooms = showAvailableOnly
+    ? filteredRooms.filter(room => !room.isRented)
+    : filteredRooms;
 
   return (
     <Box className="px-16 py-8 bg-blue-50 min-h-screen w-full">
@@ -67,26 +87,28 @@ const AvailRoom = () => {
       </div>
 
       <Grid container spacing={4} justifyContent="center">
-        {['Lalaine', 'Jade'].map((building) => {
-          const totalRooms = rooms.filter(room => room.property === building).length;
+        {['Lalaine', 'Jade'].map(building => {
+          const totalRooms = rooms.filter(
+            r => r.property === building
+          ).length;
           const availableRooms = rooms.filter(
-            room => room.property === building && !room.isRented
+            r => r.property === building && !r.isRented
           ).length;
 
           return (
             <Grid item xs={12} sm={6} md={4} key={building}>
-              <Card 
-                variant="outlined" 
+              <Card
+                variant="outlined"
                 sx={{
                   cursor: 'pointer',
                   backgroundColor: '#D8EEF8',
-                  borderRadius: 5, 
-                  boxShadow: '0 8px 20px rgba(0, 0, 0, 0.12)',
+                  borderRadius: 5,
+                  boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
                   transition: 'transform 0.4s, box-shadow 0.4s',
-                  '&:hover': { 
+                  '&:hover': {
                     transform: 'scale(1.05)',
-                    boxShadow: '0 12px 24px rgba(0, 0, 0, 0.15)' 
-                  },
+                    boxShadow: '0 12px 24px rgba(0,0,0,0.15)'
+                  }
                 }}
                 onClick={() => handleBuildingClick(building)}
               >
@@ -94,12 +116,15 @@ const AvailRoom = () => {
                   <IconButton sx={{ fontSize: '3rem', color: '#3b82f6', mb: 2 }}>
                     <ApartmentIcon fontSize="inherit" />
                   </IconButton>
-                  <Typography variant="h4" sx={{
-                    fontWeight: '700',
-                    fontFamily: 'quickplay',
-                    letterSpacing: '2px',
-                    color: '#1e3a8a',
-                  }}>
+                  <Typography
+                    variant="h4"
+                    sx={{
+                      fontWeight: 700,
+                      fontFamily: 'quickplay',
+                      letterSpacing: '2px',
+                      color: '#1e3a8a'
+                    }}
+                  >
                     {building} Building
                   </Typography>
                   <Typography variant="body1" sx={{ color: '#6b7280', mt: 1 }}>
@@ -108,21 +133,19 @@ const AvailRoom = () => {
                   <Typography variant="body1" sx={{ color: '#6b7280', mb: 2 }}>
                     Available Rooms: {availableRooms}
                   </Typography>
-                  <Button 
+                  <Button
                     variant="contained"
-                    sx={{ 
-                      mt: 3, 
-                      backgroundColor: '#3b82f6', 
-                      color: '#fff', 
-                      fontWeight: 600, 
+                    sx={{
+                      mt: 3,
+                      backgroundColor: '#3b82f6',
+                      color: '#fff',
+                      fontWeight: 600,
                       textTransform: 'capitalize',
                       borderRadius: 2,
                       px: 4,
-                      '&:hover': {
-                        backgroundColor: '#2563eb',
-                      }
+                      '&:hover': { backgroundColor: '#2563eb' }
                     }}
-                  > 
+                  >
                     {selectedBuilding === building ? 'Hide Rooms' : 'View Rooms'}
                   </Button>
                 </CardContent>
@@ -134,22 +157,53 @@ const AvailRoom = () => {
 
       {selectedBuilding && (
         <Box sx={{ mt: 6 }}>
-          <Typography variant="h5" sx={{
-            color: '#1e3a8a',
-            fontWeight: 'bold',
-            mb: 3,
-            textAlign: 'center',
-            letterSpacing: '1.5px'
-          }}>
+          <Typography
+            variant="h5"
+            sx={{
+              color: '#1e3a8a',
+              fontWeight: 'bold',
+              mb: 3,
+              textAlign: 'center',
+              letterSpacing: '1.5px'
+            }}
+          >
             {selectedBuilding} Building - Room Details
           </Typography>
+
+
+          
+{/* Modern-looking toggle button with Tailwind CSS */}
+<div className="flex justify-center mb-6">
+  <button
+    type="button"
+    onClick={() => setShowAvailableOnly(v => !v)}
+    className={`
+      inline-flex items-center px-6 py-3 font-semibold rounded-full shadow-lg transition-all duration-300
+      ${
+        showAvailableOnly
+          ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-transparent hover:from-blue-600 hover:to-indigo-600'
+          : 'bg-white text-blue-600 border-2 border-blue-600 hover:bg-blue-50'
+      }
+    `}
+  >
+    {showAvailableOnly ? 'Showing Available Only' : 'Show Available Only'}
+  </button>
+</div>
+
+
           <Grid container spacing={3} justifyContent="center">
-            {filteredRooms.map((room) => (
-              <Grid item xs={12} sm={6} md={4} key={`${room.property}-${room.roomNumber}`}>
-                <RoomCard 
-                  roomNumber={room.roomNumber} 
-                  isRented={room.isRented} 
-                  property={room.property} 
+            {displayedRooms.map(room => (
+              <Grid
+                item
+                xs={12}
+                sm={6}
+                md={4}
+                key={`${room.property}-${room.roomNumber}`}
+              >
+                <RoomCard
+                  roomNumber={room.roomNumber}
+                  isRented={room.isRented}
+                  property={room.property}
                 />
               </Grid>
             ))}
@@ -158,6 +212,6 @@ const AvailRoom = () => {
       )}
     </Box>
   );
-}
+};
 
 export default AvailRoom;

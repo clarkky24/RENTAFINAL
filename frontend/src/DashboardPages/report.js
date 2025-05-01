@@ -300,8 +300,8 @@ function Reports() {
   const stats = filteredRooms.length > 0
     ? [
         { label: 'Revenue', value: `₱${revenueValue}`, icon: <CalendarTodayIcon /> },
-        { label: 'Outstanding Rent', value: `₱${outstandingRent}`, icon: <CalendarTodayIcon /> },
         { label: 'Collected Rent', value: `₱${collectedRent}`, icon: <CalendarTodayIcon /> },
+        { label: 'Outstanding Rent', value: `₱${outstandingRent}`, icon: <CalendarTodayIcon /> },
         { label: 'Total Units', value: totalUnits, icon: <CalendarTodayIcon /> },
         { label: 'Occupied Units', value: occupiedUnits, icon: <CalendarTodayIcon /> },
         { label: 'Vacant Units', value: vacantUnits, icon: <CalendarTodayIcon /> },

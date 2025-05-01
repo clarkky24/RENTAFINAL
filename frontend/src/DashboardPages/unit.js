@@ -7,6 +7,7 @@ import RoomCard from './roomcard';
 const UnitsPage = () => {
   const [rooms, setRooms] = useState([]);
   const [selectedBuilding, setSelectedBuilding] = useState(null);
+  const [showAvailableOnly, setShowAvailableOnly] = useState(false);
 
   useEffect(() => {
     const fetchTenantData = async () => {
@@ -51,8 +52,13 @@ const UnitsPage = () => {
   }, []);
 
   const filteredRooms = rooms.filter(room => room.property === selectedBuilding);
+  const displayedRooms = showAvailableOnly
+    ? filteredRooms.filter(room => !room.isRented)
+    : filteredRooms;
+
   const handleBuildingClick = (building) => {
-    setSelectedBuilding(selectedBuilding === building ? null : building);
+    setSelectedBuilding(prev => (prev === building ? null : building));
+    setShowAvailableOnly(false);
   };
 
   return (
@@ -65,8 +71,7 @@ const UnitsPage = () => {
 
       <Grid container spacing={4} justifyContent="center">
         {['Lalaine', 'Jade'].map((building) => {
-          // compute both totals
-          const totalRooms     = rooms.filter(r => r.property === building).length;
+          const totalRooms = rooms.filter(r => r.property === building).length;
           const availableRooms = rooms.filter(r => r.property === building && !r.isRented).length;
 
           return (
@@ -99,15 +104,12 @@ const UnitsPage = () => {
                   }}>
                     {building} Building
                   </Typography>
-
-                  {/* Total & Available */}
                   <Typography variant="body1" sx={{ color: '#6b7280', mt: 1 }}>
                     Total Rooms: {totalRooms}
                   </Typography>
                   <Typography variant="body1" sx={{ color: '#6b7280', mb: 2 }}>
                     Available Rooms: {availableRooms}
                   </Typography>
-
                   <Button
                     variant="contained"
                     sx={{
@@ -142,8 +144,27 @@ const UnitsPage = () => {
           }}>
             {selectedBuilding} Building - Room Details
           </Typography>
+
+          {/* Toggle button to filter only available */}
+          <div className="flex justify-center mb-6 mb:mb-4 tb:mb-6">
+            <button
+              type="button"
+              onClick={() => setShowAvailableOnly(v => !v)}
+              className={`
+                inline-flex items-center px-6 py-3 font-semibold rounded-full shadow-lg transition-all duration-300
+                ${
+                  showAvailableOnly
+                    ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-transparent hover:from-blue-600 hover:to-indigo-600'
+                    : 'bg-white text-blue-600 border-2 border-blue-600 hover:bg-blue-50'
+                }
+              `}
+            >
+              {showAvailableOnly ? 'Showing Available Only' : 'Show Available Only'}
+            </button>
+          </div>
+
           <Grid container spacing={3} justifyContent="center">
-            {filteredRooms.map((room) => (
+            {displayedRooms.map((room) => (
               <Grid item xs={12} sm={6} md={4} key={`${room.property}-${room.roomNumber}`}>
                 <RoomCard
                   roomNumber={room.roomNumber}

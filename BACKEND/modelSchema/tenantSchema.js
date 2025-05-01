@@ -35,6 +35,10 @@ const tenantSchema = new mongoose.Schema({
         type: Number, 
         
     },
+    remark: { 
+        type: String, 
+        default: '' },
+        
     paymentStatus: {
         type: String,
         enum: ['Pending', 'Paid', 'Advanced'],
