@@ -12,6 +12,7 @@ const payRoutes = require('./Routes/payRoute');
 const applyRoutes = require('./Routes/applyRoutes');
 const transactionRoute = require('./Routes/transactionRoute');
 const revenueRoute = require('./Routes/revenueRoutes');
+const visitRoutes = require('./Routes/visitRoutes');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const cron = require('node-cron');
@@ -19,6 +20,7 @@ const Tenant = require('./modelSchema/tenantSchema');
 const moment = require('moment-timezone');
 const sendPendingPaymentReminder = require('./Routes/notificationRoute');
 const path = require('path');
+
 
 // NEW: Require revenue snapshot utility and model
 const { calculateRevenueSnapshot } = require('./modelSchema/revenueUtil');
@@ -46,6 +48,7 @@ app.use('/api/request', requestRoutes);
 app.use('/api/user', authRoutes);
 app.use('/api/pet', petRoutes);
 app.use('/api/pay', payRoutes);
+app.use('/api/visitor-log', visitRoutes)
 app.use('/api/revenue', revenueRoute);
 app.use('/api/apply', applyRoutes);
 app.use('/api', transactionRoute);

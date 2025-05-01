@@ -1,6 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import logo from '../pages/apartment.png';
-import { TextField, InputAdornment, IconButton, Checkbox, FormControlLabel, Button } from '@mui/material';
+import {
+  TextField,
+  InputAdornment,
+  IconButton,
+  Checkbox,
+  FormControlLabel,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  Box,
+  DialogActions
+} from '@mui/material';
 import SentimentVerySatisfiedTwoToneIcon from '@mui/icons-material/SentimentVerySatisfiedTwoTone';
 import LoginIcon from '@mui/icons-material/Login';
 import LockIcon from '@mui/icons-material/Lock';
@@ -13,26 +26,31 @@ import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import MessageIcon from '@mui/icons-material/Message';
 
-//MessengerButton component
+// MessengerButton component
 const MessengerButton = () => (
   <a
     href="https://m.me/645535708633228"
     target="_blank"
     rel="noopener noreferrer"
-    className="fixed bottom-4 right-4  flex items-center space-x-2 bg-blue-800 hover:bg-blue-600 text-white px-6 py-4 rounded-full shadow-lg transition-transform duration-300 transform hover:scale-105"
+    className="fixed bottom-4 right-4 flex items-center space-x-2 bg-blue-800 hover:bg-blue-600 text-white px-6 py-4 rounded-full shadow-lg transition-transform duration-300 transform hover:scale-105"
   >
     <MessageIcon className="w-10 h-10" />
   </a>
 );
 
 const LandingPage = () => {
-  const { login, error, isLoading, savedEmail } = useLogin(); // Call the hook
+  const { login, error, isLoading, savedEmail } = useLogin();
   const [email, setEmail] = useState(savedEmail);
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(!!savedEmail);
   const [showPassword, setShowPassword] = useState(false);
-
   const navigate = useNavigate();
+
+  // visitor info state
+  const [visitorName, setVisitorName] = useState('');
+  const [visitorEmail, setVisitorEmail] = useState('');
+  const [nextPath, setNextPath] = useState(null);
+  const [showVisitorDialog, setShowVisitorDialog] = useState(false);
 
   React.useEffect(() => {
     if (savedEmail) setEmail(savedEmail);
@@ -64,6 +82,32 @@ const LandingPage = () => {
     navigate('/signup');
   };
 
+  // when visitor clicks virtual tour or available rooms
+  const handleVisitClick = (path) => {
+    setNextPath(path);
+    setShowVisitorDialog(true);
+  };
+
+  // after visitor submits name/email
+  const handleVisitorSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await fetch('/api/visitor-log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: visitorName,
+          email: visitorEmail,
+          page: nextPath
+        })
+      });
+    } catch (err) {
+      console.error('couldn’t record visitor', err);
+    }
+    setShowVisitorDialog(false);
+    navigate(nextPath);
+  };
+
   return (
     <>
       <div className="grid grid-cols-2 mb:grid-cols-1 tb:grid-cols-1">
@@ -72,23 +116,24 @@ const LandingPage = () => {
           <h1 className="bg-slate-100 font-playfair text-6xl text-center font-black mb:text-4xl tb:text-6xl">PERFECT</h1>
           <h1 className="bg-slate-100 font-quicksand text-5xl text-end pr-24 mb:text-3xl mb:pr-24 tb:text-4xl tb:pr-44">HOME</h1>
           <h1 className="text-gray-950 font-black tracking-widest text-4xl pt-10 leading-9 bg-slate-100 pb-16 font-playfair text-center mb:text-3xl tb:4xl tb:px-20">
-            <span className="text-blue-600 text-7xl mb:text-4xl tb:text-5xl">Vergara's</span> <span className="font-light">Apartment Management Complex</span>
+            <span className="text-blue-600 text-7xl mb:text-4xl tb:text-5xl">Vergara's</span>{' '}
+            <span className="font-light">Apartment Management Complex</span>
           </h1>
-          <div className="flex space-x-4 justify-center mb:px-2">
-            <Link
-              to="/virtualTour"
-              className="inline-flex items-center font-semibold rounded-full bg-gradient-to-r from-blue-500 to-blue-400 hover:from-blue-600 hover:to-blue-500 text-blue-950 text-lg transition-all duration-300 px-6 py-3 shadow-lg transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-300 font-quicksand mb:text-xs"
+          <div className="flex space-x-4 justify-center mb:px-2 ">
+            <Button
+              onClick={() => handleVisitClick('/virtualTour')}
+              className="!inline-flex items-center !font-semibold !rounded-full !bg-gradient-to-r from-blue-500 to-blue-400 !hover:from-blue-600 !hover:to-blue-500 !text-blue-950 text-lg !transition-all duration-300 px-6 py-3 shadow-lg transform hover:scale-105 !focus:outline-none !focus:ring-2 focus:ring-blue-300 !font-quicksand mb:text-xs !p-3 "
             >
-              <HouseIcon className="mr-3" />
+              <HouseIcon className="mr-3 text-blue-950" />
               Virtual Apartment Tour
-            </Link>
-            <Link
-              to="/available-unit"
-              className="inline-flex items-center font-semibold rounded-full bg-gradient-to-r from-blue-500 to-blue-400 hover:from-blue-600 hover:to-blue-500 text-blue-950 text-lg transition-all duration-300 px-6 py-3 shadow-lg transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-300 font-quicksand mb:text-xs"
+            </Button>
+            <Button
+              onClick={() => handleVisitClick('/available-unit')}
+              className="!inline-flex items-center !font-semibold !rounded-full !bg-gradient-to-r from-blue-500 to-blue-400 !hover:from-blue-600 !hover:to-blue-500 !text-blue-950 text-lg !transition-all duration-300 px-6 py-3 shadow-lg transform hover:scale-105 !focus:outline-none !focus:ring-2 focus:ring-blue-300 !font-quicksand mb:text-xs !p-3"
             >
-              <ApartmentIcon className="mr-3" />
+              <ApartmentIcon className="mr-3 text-blue-950" />
               Available Rooms
-            </Link>
+            </Button>
           </div>
         </div>
 
@@ -171,7 +216,6 @@ const LandingPage = () => {
                     onClick={handleForgotPassword}
                     className="!text-xs !text-blue-700 hover:!underline font-quicksand mb:text-xs"
                   >
-                     
                   </Button>
                 </div>
               </div>
@@ -214,6 +258,80 @@ const LandingPage = () => {
           </form>
         </div>
       </div>
+
+      {/* Visitor info dialog */}
+      <Dialog
+  open={showVisitorDialog}
+  onClose={() => setShowVisitorDialog(false)}
+  maxWidth="xs"
+  fullWidth
+  PaperProps={{
+    sx: {
+      borderRadius: 2,
+      p: 1,
+      boxShadow: 4,
+    }
+  }}
+>
+  <DialogTitle sx={{ typography: 'h6', textAlign: 'center', pb: 0 }}>
+    Almost there!
+  </DialogTitle>
+
+  <DialogContent sx={{ pt: 1, px: 3 }}>
+    <DialogContentText 
+      sx={{ 
+        textAlign: 'center', 
+        mb: 2, 
+        color: 'text.secondary', 
+        typography: 'body2' 
+      }}
+    >
+      Just tell us who you are to continue.
+    </DialogContentText>
+
+    <Box component="form" id="visitor-form" onSubmit={handleVisitorSubmit} sx={{ display: 'grid', gap: 1.5 }}>
+      <TextField
+        label="Name"
+        variant="outlined"
+        size="small"
+        fullWidth
+        required
+        value={visitorName}
+        onChange={e => setVisitorName(e.target.value)}
+      />
+      <TextField
+        label="Email"
+        variant="outlined"
+        size="small"
+        type="email"
+        fullWidth
+        required
+        value={visitorEmail}
+        onChange={e => setVisitorEmail(e.target.value)}
+      />
+    </Box>
+  </DialogContent>
+
+  <DialogActions sx={{ justifyContent: 'center', pb: 2, px: 2 }}>
+    <Button
+      onClick={() => setShowVisitorDialog(false)}
+      size="small"
+      sx={{ textTransform: 'none' }}
+    >
+      Cancel
+    </Button>
+    <Button
+      type="submit"
+      form="visitor-form"
+      variant="contained"
+      size="small"
+      sx={{ textTransform: 'none' }}
+    >
+      Continue
+    </Button>
+  </DialogActions>
+</Dialog>
+
       {/* Messenger Chat Button */}
       <MessengerButton />
     </>

@@ -13,7 +13,17 @@ import { Link, useLocation } from 'react-router-dom';
 import 'react-date-range/dist/styles.css'; // main style file
 import 'react-date-range/dist/theme/default.css'; // theme css file
 import { Box, Grid } from '@mui/material';
-
+import {
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  TableContainer,
+  Paper,
+  Typography,
+} from '@mui/material';
+import {  Button, ButtonGroup } from '@mui/material';
 // Custom input for individual date (used in RangeSelector if needed)
 const CustomInput = React.forwardRef(({ value, onClick }, ref) => (
   <div
@@ -25,6 +35,8 @@ const CustomInput = React.forwardRef(({ value, onClick }, ref) => (
     <span>{value.toUpperCase()}</span>
   </div>
 ));
+
+
 
 // Utility functions to compute ranges
 const getToday = () => new Date();
@@ -218,6 +230,41 @@ function Reports() {
   const [showEndCalendar, setShowEndCalendar] = useState(false);
   const location = useLocation();
 
+  // 2) Inside your Reports() function, add:
+const [visits, setVisits] = useState([]);
+const [filterMode, setFilterMode] = useState('all');
+
+// 2) Helper (no TS annotation)
+const isToday = (dateString) => {
+  const d = new Date(dateString);
+  const today = new Date();
+  return (
+    d.getFullYear() === today.getFullYear() &&
+    d.getMonth()    === today.getMonth() &&
+    d.getDate()     === today.getDate()
+  );
+};
+
+// derive the list we actually show
+const displayedVisits = visits.filter(v =>
+  filterMode === 'all'
+    ? true
+    : isToday(v.createdAt)
+);
+
+
+useEffect(() => {
+  const fetchVisits = async () => {
+    try {
+      const res = await axios.get('/api/visitor-log');
+      console.log('got visits:', res.data);  // ← add this!
+      setVisits(res.data);
+    } catch (err) {
+      console.error('Error fetching visits:', err);
+    }
+  };
+  fetchVisits();
+}, []);
   // Fetch tenant data and build rooms array (for occupancy statistics)
   useEffect(() => {
     const fetchTenantData = async () => {
@@ -478,6 +525,116 @@ function Reports() {
             </Grid>
           </Box>
         )}
+
+<Box
+  sx={{
+    mt: 4,
+    mb: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between'
+  }}
+>
+  <Typography
+    variant="h6"
+    sx={{ color: 'primary.dark', fontWeight: 600 }}
+  >
+    Visitor Logs
+  </Typography>
+
+  <ButtonGroup size="small" variant="outlined">
+    <Button
+      onClick={() => setFilterMode('all')}
+      variant={filterMode === 'all' ? 'contained' : 'outlined'}
+    >
+      All ({visits.length})
+    </Button>
+    <Button
+      onClick={() => setFilterMode('today')}
+      variant={filterMode === 'today' ? 'contained' : 'outlined'}
+    >
+      Today ({visits.filter(v => isToday(v.createdAt)).length})
+    </Button>
+  </ButtonGroup>
+</Box>
+
+<Paper
+  elevation={4}
+  sx={{ borderRadius: 2, overflow: 'hidden', mt: 2 }}
+>
+  <TableContainer sx={{ maxHeight: 360 }}>
+    <Table stickyHeader size="small" aria-label="visitor logs">
+      {/* table title */}
+      <caption
+        style={{
+          captionSide: 'top',
+          textAlign: 'center',
+          padding: '12px',
+          fontSize: '1rem',
+          fontWeight: 600,
+          color: '#0D47A1'              // primary.dark
+        }}
+      >
+        Visitor Logs
+      </caption>
+
+      
+
+      <TableHead>
+        <TableRow sx={{ backgroundColor: 'primary.main' }}>
+          {['Name', 'Email', 'Page Visited', 'When'].map((heading) => (
+            <TableCell
+              key={heading}
+              align="center"
+              sx={{
+                color: 'black',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                fontSize: '0.85rem',
+                borderBottom: 'none'
+              }}
+            >
+              {heading}
+            </TableCell>
+          ))}
+        </TableRow>
+      </TableHead>
+
+      <TableBody>
+        {visits.map((v) => (
+          <TableRow
+            key={v._id}
+            hover
+            sx={{
+              '&:nth-of-type(odd)': { backgroundColor: 'grey.100' },
+              '&:last-child td, &:last-child th': { borderBottom: 'none' }
+            }}
+          >
+            <TableCell align="center" sx={{ py: 1 }}>
+              {v.name}
+            </TableCell>
+            <TableCell align="center" sx={{ py: 1 }}>
+              {v.email}
+            </TableCell>
+            <TableCell align="center" sx={{ py: 1 }}>
+              {v.page}
+            </TableCell>
+            <TableCell align="center" sx={{ py: 1 }}>
+              {new Date(v.createdAt).toLocaleString('en-GB', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </TableContainer>
+</Paper>
+
 
         {/* Export Button */}
         <div className="flex justify-center my-10 mt-16">
