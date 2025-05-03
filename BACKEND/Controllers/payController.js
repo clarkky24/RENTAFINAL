@@ -2,33 +2,35 @@ const mongoose = require('mongoose');
 const Pay = require('../modelSchema/paySchema');
 
 // POST /api/payment-proofs/register
+// POST /api/payment-proofs/register
 const createPaymentProof = async (req, res) => {
   try {
-    const { name, email, buildingName, roomNumber, transactionType, paymentDate, transactionId } = req.body;
-    
+    // Only pull the fields you still need
+    const { email, transactionType, paymentDate, transactionId } = req.body;
+
     // Ensure a file is provided
     if (!req.file) {
       return res.status(400).json({ error: 'Proof file is required' });
     }
-    
+
     // Use the file path from the uploaded file
     const fileName = req.file.path;
 
-    // Create a new payment proof with a default status of "pending"
+    // Create a new payment proof with only the remaining fields
     const newPaymentProof = new Pay({
-      name,
       email,
-      buildingName,
-      roomNumber,
       transactionType,
       paymentDate,
       transactionId,
       fileName,
-      status: 'pending' // New proofs start with a "pending" status
+      status: 'pending' // New proofs start with "pending"
     });
 
     await newPaymentProof.save();
-    return res.status(201).json({ message: 'Payment proof created successfully', paymentProof: newPaymentProof });
+    return res.status(201).json({
+      message: 'Payment proof created successfully',
+      paymentProof: newPaymentProof
+    });
   } catch (error) {
     console.error('Error creating payment proof:', error);
     return res.status(500).json({ error: 'Internal server error' });

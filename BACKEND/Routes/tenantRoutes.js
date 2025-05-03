@@ -6,7 +6,8 @@ const {
     getAllTenant,
     getTenantById,
     updateTenant,
-    deleteExistingTenant 
+    deleteExistingTenant,
+    getTenantByEmail 
 } = require('../Controllers/tenantsControllers')
 
 
@@ -24,5 +25,7 @@ router.put('/:id', updateTenant)
 
 //  create a new tenant
 router.delete('/:id', deleteExistingTenant )
+
+router.get('/email/:email', getTenantByEmail);
 
 module.exports = router

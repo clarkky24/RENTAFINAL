@@ -16,14 +16,19 @@ const PaymentProofUpload = () => {
   // State for delete confirmation dialog
   const [deleteDialog, setDeleteDialog] = useState(null);
 
+
+
+
+const [name, setName] = useState('');
+const [buildingName, setBuildingName] = useState('');
+const [roomNumber, setRoomNumber] = useState('');
+
   // Form state variables
   // Editable name field (for user's full name)
-  const [name, setName] = useState('');
+
   // Editable email field (user can modify it manually)
   const [formEmail, setFormEmail] = useState('');
-  const [buildingName, setBuildingName] = useState('');
-  const [roomNumber, setRoomNumber] = useState('');
-  const [roomChoices, setRoomChoices] = useState([]);
+
   const [transactionType, setTransactionType] = useState('');
   const [paymentDate, setPaymentDate] = useState('');
   const [transactionId, setTransactionId] = useState('');
@@ -33,7 +38,22 @@ const PaymentProofUpload = () => {
   const [transactions, setTransactions] = useState([]);
   const fileInputRef = useRef(null);
 
-
+//get info
+  useEffect(() => {
+    if (!user?.email) return;
+  
+    fetch(`/api/tenants/email/${user.email}`)
+      .then(res => {
+        if (!res.ok) throw new Error('Tenant not found');
+        return res.json();
+      })
+      .then(tenant => {
+        setName(tenant.name);
+        setBuildingName(tenant.property); 
+        setRoomNumber(tenant.roomNumber);
+      })
+      .catch(err => console.error('Error fetching tenant info:', err));
+  }, [user]);
   
   // Prefill the email field from auth context
   useEffect(() => {
@@ -78,18 +98,7 @@ const PaymentProofUpload = () => {
   };
 
   // Update room choices when building selection changes
-  const handleBuildingChange = (e) => {
-    const selected = e.target.value;
-    setBuildingName(selected);
-    setRoomNumber('');
-    if (selected === 'Lalaine') {
-      setRoomChoices(generateRoomNumbers(28));
-    } else if (selected === 'Jade') {
-      setRoomChoices(generateRoomNumbers(30));
-    } else {
-      setRoomChoices([]);
-    }
-  };
+
 
   // Handle file selection via click or drag-and-drop
   const handleFileSelect = (e) => {
@@ -127,10 +136,7 @@ const PaymentProofUpload = () => {
     if (
       !transactionType ||
       !paymentDate ||
-      !selectedFile ||
-      !name ||
-      !buildingName ||
-      !roomNumber
+      !selectedFile 
     ) {
       setMessage('Please fill in all required fields.');
       return;
@@ -142,10 +148,10 @@ const PaymentProofUpload = () => {
     formData.append('paymentDate', paymentDate);
     formData.append('transactionId', transactionId);
     // Use the manually entered name and email
-    formData.append('name', name);
+ 
     formData.append('email', formEmail);
-    formData.append('buildingName', buildingName);
-    formData.append('roomNumber', roomNumber);
+
+
     // Field name "paymentProof" must match what the backend expects.
     formData.append('paymentProof', selectedFile);
 
@@ -165,10 +171,10 @@ const PaymentProofUpload = () => {
         setTransactionType('');
         setPaymentDate('');
         setTransactionId('');
-        setName('');
-        setBuildingName('');
-        setRoomNumber('');
-        setRoomChoices([]);
+   
+
+
+
         setSelectedFile(null);
         setFileName('');
         setOpenDialog(false);
@@ -328,19 +334,7 @@ const PaymentProofUpload = () => {
               </div>
 
               {/* Editable Name Field */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">
-                  Name
-                </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Enter your name"
-                  required
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-                />
-              </div>
+             
 
               {/* Editable Email Field */}
               <div className="mb-4">
@@ -355,50 +349,6 @@ const PaymentProofUpload = () => {
                   required
                   className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
                 />
-              </div>
-
-              <div className="flex flex-wrap gap-4 mb-4">
-                <div className="w-full md:w-1/4">
-                  <label
-                    htmlFor="buildingName"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Building Name
-                  </label>
-                  <select
-                    id="buildingName"
-                    value={buildingName}
-                    onChange={handleBuildingChange}
-                    required
-                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-                  >
-                    <option value="">Select a building</option>
-                    <option value="Lalaine">Lalaine</option>
-                    <option value="Jade">Jade</option>
-                  </select>
-                </div>
-                <div className="w-full md:w-1/4">
-                  <label
-                    htmlFor="roomNumber"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Room Number
-                  </label>
-                  <select
-                    id="roomNumber"
-                    value={roomNumber}
-                    onChange={(e) => setRoomNumber(e.target.value)}
-                    required
-                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-                  >
-                    <option value="">Select a room number</option>
-                    {roomChoices.map((room) => (
-                      <option key={room} value={room}>
-                        {room}
-                      </option>
-                    ))}
-                  </select>
-                </div>
               </div>
 
               <div className="mb-4">
@@ -527,10 +477,10 @@ const PaymentProofUpload = () => {
                         </button>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
-                        {transaction.buildingName}
+                        {buildingName}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
-                        {transaction.roomNumber}
+                        {roomNumber}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
                         {transaction.transactionId || 'N/A'}

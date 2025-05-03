@@ -88,9 +88,27 @@ const updateTenant = async (req, res) => {
     } catch (error) {
       res.status(500).json({ error: 'Server error' });
     }
-  };     
+  };
+  
+  // GET tenant by email
+const getTenantByEmail = async (req, res) => {
+    try {
+      const { email } = req.params;
+      const tenant = await Tenant.findOne({ email });
+  
+      if (!tenant) {
+        return res.status(404).json({ message: 'Tenant not found' });
+      }
+  
+      res.status(200).json(tenant);
+    } catch (error) {
+      console.error('Error fetching tenant:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  };
 
 module.exports = {
+    getTenantByEmail,
     createNewTenant,
     getAllTenant,
     getTenantById,
