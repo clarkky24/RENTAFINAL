@@ -60,14 +60,22 @@ const PetManagementPage = () => {
   const SERVICE_ID = 'service_cz6b2f3';
   const TEMPLATE_ID = 'template_2jhtpmx';
   const PUBLIC_KEY = 'DP2pHl_AB-rj4JjWj';
+  // Use your auth hook to retrieve the user and their role
+  const { user } = useAuthContext();
+
+// once user loads (or you open the dialog), populate email
+useEffect(() => {
+  if (user && isFormDialogOpen && !isEditing) {
+    setPetData(pd => ({ ...pd, email: user.email }));
+  }
+}, [user, isFormDialogOpen, isEditing]);
 
 
   const handleCloseDeleteDialog = () => {
     setIsDeleteDialogOpen(false);
   };
 
-  // Use your auth hook to retrieve the user and their role
-  const { user } = useAuthContext();
+
 
   // -----------------------
   // Fetch Pets Data
@@ -118,7 +126,7 @@ const PetManagementPage = () => {
       weight: '',
       vaccinationStatus: 'Up-to-date',
       notes: '',
-      email: '',
+      email: user?.email || '',
     });
     setImageFile(null);
     setImagePreview(null);

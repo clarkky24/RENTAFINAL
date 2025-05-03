@@ -18,6 +18,22 @@ const MaintenanceRequestDialog = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { user } = useAuthContext();
 
+  const [buildingName, setBuildingName] = useState('')
+  const [roomNumber, setRoomNumber]   = useState('')
+
+  useEffect(() => {
+    if (!user?.email) return
+
+    axios
+      .get(`/api/tenants/email/${encodeURIComponent(user.email)}`)
+      .then(res => {
+        const t = res.data
+        setBuildingName(t.property)
+        setRoomNumber(t.roomNumber)
+      })
+      .catch(err => console.error('Tenant lookup failed:', err))
+  }, [user?.email])
+
   // For demo purposes - in production, this should come from auth context
   const [isAdmin] = useState(true);
   
@@ -479,11 +495,11 @@ const MaintenanceRequestDialog = () => {
                   </p>
                   <p>
                     <span className="font-semibold text-blue-950 uppercase font-quicksand">Property: </span> 
-                    <span className="tracking-widest uppercase text-gray-700 bg-green-100 font-semibold">{request.property}</span>
+                    <span className="tracking-widest uppercase text-gray-700 bg-green-100 font-semibold">{property}</span>
                   </p>
                   <p>
                     <span className="font-semibold text-blue-950 uppercase font-quicksand">Room Number: </span> 
-                    <span className="font-black bg-green-100">{request.roomNumber}</span>
+                    <span className="font-black bg-green-100">{roomNumber}</span>
                   </p>
                   <p>
                     <span className="font-semibold text-blue-950 uppercase font-quicksand">Requested By: </span> 

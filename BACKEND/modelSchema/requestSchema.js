@@ -10,15 +10,9 @@ const RequestSchema = new mongoose.Schema({
         type: String, 
         required: true
     },
-    roomNumber: {
-        type: String, // 
-        required: true
-    },
-    property: {
-        type: String, // 
-        enum: ['lalaine', 'jade', 'allysa'],
-        required: true
-    },
+    property: { type: String, required: true },
+    roomNumber: { type: String, required: true },
+
 
     description: {
         type: String,

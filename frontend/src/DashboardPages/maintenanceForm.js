@@ -27,7 +27,22 @@ const MaintenanceRequestDialog = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuthContext();
 
+  const [buildingName, setBuildingName] = useState('')
+  const [roomNumber, setRoomNumber]   = useState('')
 
+  useEffect(() => {
+    if (!user?.email) return;
+  
+    axios.get(`/api/tenants/email/${encodeURIComponent(user.email)}`)
+      .then(res => {
+        const { property, roomNumber } = res.data;
+        // set them in both local state and formData
+        setBuildingName(property);
+        setRoomNumber(roomNumber);
+        setFormData(fd => ({ ...fd, property, roomNumber }));
+      })
+      .catch(console.error);
+  }, [user?.email]);
 
 
   // For demo purposes - in production, this should come from auth context
@@ -35,12 +50,12 @@ const MaintenanceRequestDialog = () => {
   
   const [formData, setFormData] = useState({
     requestTitle: '',
-    property: 'lalaine',
     priority: 'medium',
-    description: '',
-    tenantName: '',
-    contact: '',
+    property: '',       // ← add these
     roomNumber: '',
+    description: '',
+    tenantName: user?.email || '', 
+    contact: '',
     preferredDate: '',
     status: 'pending'
   });
@@ -95,77 +110,89 @@ const MaintenanceRequestDialog = () => {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-
-  setIsSubmitting(true);
-  try {
-    if (isEditMode) {
-      // 1) update on your backend
-      await axios.put(
-        `http://localhost:4000/api/request/${selectedRequest._id}`,
-        formData
-      );
-
-      // 2) then send an “updated” email
-      const updateParams = {
-        user_name: formData.tenantName,
-        request_title: formData.requestTitle,
-        property: formData.property,
-        room_number: formData.roomNumber,
-        priority: formData.priority,
-        service: formData.preferredDate,
-        status: formData.status,
-        message: formData.description,
-        to_email: formData.tenantName 
-      };
-
-      await emailjs.send(
-        SERVICE_ID,
-        TEMPLATE_ID2,
-        updateParams,
-        PUBLIC_KEY
-      );
-      toast.success(`Update email sent to ${formData.tenantEmail}`);
-
-    } else {
-      // your existing “new request” flow
-      const response = await axios.post(
-        'http://localhost:4000/api/request',
-        formData
-      );
-
-      const createParams = {
-        user_name: formData.tenantName,
-        request_title: formData.requestTitle,
-        property: formData.property,
-        room_number: formData.roomNumber,
-        priority: formData.priority,
-        service: formData.preferredDate,
-        status: formData.status,
-        message: formData.description,
-        to_email: formData.tenantName 
-      };
-
-      await emailjs.send(
-        SERVICE_ID,
-        TEMPLATE_ID,
-        createParams,
-        PUBLIC_KEY
-      );
-      toast.success(`Confirmation email sent to ${formData.tenantEmail}`);
+    e.preventDefault();
+    setIsSubmitting(true);
+  
+    // 🛠️ Build a “payload” that merges in those two bits from state:
+    const payload = {
+      ...formData,
+      property:  buildingName,
+      roomNumber: roomNumber,
+    };
+  
+    try {
+      if (isEditMode) {
+        // 1) update on your backend (now sending payload)
+        await axios.put(
+          `http://localhost:4000/api/request/${selectedRequest._id}`,
+          payload
+        );
+  
+        // 2) then send an “updated” email
+        const updateParams = {
+          user_name:    payload.tenantName,
+          request_title: payload.requestTitle,
+          property:     payload.property,      // ← you can include these in the email if you want
+          room_number:  payload.roomNumber,
+          priority:     payload.priority,
+          service:      payload.preferredDate,
+          status:       payload.status,
+          message:      payload.description,
+          to_email:     payload.tenantName 
+        };
+  
+        await emailjs.send(
+          SERVICE_ID,
+          TEMPLATE_ID2,
+          updateParams,
+          PUBLIC_KEY
+        );
+        toast.success(`Update email sent to ${payload.tenantName}`);
+  
+      } else {
+        // create: send payload instead of bare formData
+        const response = await axios.post(
+          'http://localhost:4000/api/request',
+          payload
+        );
+  
+        const createParams = {
+          user_name:    payload.tenantName,
+          request_title: payload.requestTitle,
+          property:     payload.property,
+          room_number:  payload.roomNumber,
+          priority:     payload.priority,
+          service:      payload.preferredDate,
+          status:       payload.status,
+          message:      payload.description,
+          to_email:     payload.tenantName 
+        };
+  
+        await emailjs.send(
+          SERVICE_ID,
+          TEMPLATE_ID,
+          createParams,
+          PUBLIC_KEY
+        );
+        toast.success(`Confirmation email sent to ${payload.tenantName}`);
+      }
+  
+      await fetchRequests();
+      resetForm();
+      setIsOpen(false);
+  
+    } catch (err) {
+      console.error('Error submitting the form:', err.response?.data || err.message);
+      toast.error('Failed to submit request or send email.');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    await fetchRequests();
-    setIsOpen(false);
-    resetForm();
-
-  } catch (err) {
-    console.error('Error submitting the form:', err.response?.data || err.message);
-    toast.error('Failed to submit request or send email.');
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  };
+  
+// whenever the dialog opens or user changes, re-sync:
+useEffect(() => {
+  setFormData(f => ({ ...f, tenantName: user?.email || '' }));
+}, [user?.email]);
 
   
 
@@ -246,12 +273,10 @@ const MaintenanceRequestDialog = () => {
   const resetForm = () => {
     setFormData({
       requestTitle: 'Repair Request', 
-      property: 'lalaine',
       priority: 'medium',
       description: '',
-      tenantName: '',
+      tenantName: user?.email || '', 
       contact: '',
-      roomNumber: '',
       preferredDate: '',
       status: 'pending'
     });
@@ -324,19 +349,6 @@ const MaintenanceRequestDialog = () => {
                         <option value="Replacement Needed">Replacement Needed</option>
                         <option value="Other">Other</option>
                       </select>
-
-                      <label className="block text-sm font-black text-blue-950 mb-1 mt-4">
-                        Property Building
-                      </label>
-                      <select
-                        name="property"
-                        value={formData.property}
-                        onChange={handleChange}
-                        className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value="lalaine">Lalaine</option>
-                        <option value="jade">Jade</option>
-                      </select>
                     </div>
 
                     {user?.role === 'admin' && (
@@ -391,25 +403,7 @@ const MaintenanceRequestDialog = () => {
                         />
                       </div>
 
-                      <div>
-                        <label className="block text-sm font-black text-blue-950 mb-1">
-                          Room Number
-                        </label>
-                        <select
-                          name="roomNumber"
-                          value={formData.roomNumber}
-                          onChange={handleChange}
-                          className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          required
-                        >
-                          <option value="">Select a room</option>
-                          {roomChoices.map((room) => (
-                            <option key={room} value={room}>
-                              {room}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                     
                     </div>
 
                   {/* Service Date - only visible for admin users */}
