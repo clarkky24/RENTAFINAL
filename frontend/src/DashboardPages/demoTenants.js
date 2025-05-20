@@ -669,23 +669,26 @@ const handleMarkAsPaid = async () => {
                                 .replace(',', '')
                             )}
                           </td>
-                            <td className="px-4 py-2 mb:px-2 mb:py-2 tb:px-3 tb:py-3 font-bold text-sm tracking-wide border border-blue-900">
+                          <td className="px-4 py-2 mb:px-2 mb:py-2 tb:px-3 tb:py-3 font-bold text-sm tracking-wide border border-blue-900">
+                          
                             {editingTenantId === tenant._id ? (
                               <TextField
                                 name="rentAmount"
-                                // keep the raw value in edit mode so the user can type freely:
                                 value={editedTenantData.rentAmount ?? ''}
                                 onChange={handleChange}
                                 variant="outlined"
                                 size="small"
                               />
                             ) : tenant.rentAmount != null ? (
-                              // only call toFixed if it's really a number
-                              `₱${Number(tenant.rentAmount).toFixed(2)}`
+                              `₱${Number(tenant.rentAmount).toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                              })}`
                             ) : (
-                              '—'  // fallback when no amount is set
+                              '—'
                             )}
                           </td>
+
                           <td className="px-4 py-2 mb:px-2 mb:py-2 tb:px-3 tb:py-3 font-bold text-sm tracking-wide border border-blue-900">
                             <span
                               className={`
@@ -701,16 +704,21 @@ const handleMarkAsPaid = async () => {
                           </td>
                           <td className="px-12 mb:px-2 mb:py-2 tb:px-3 tb:py-3 font-xl text-sm tracking-wide border border-blue-900">
                             <CommentIcon
-                              className="cursor-pointer text-xl text-blue-600 hover:text-gray-800"
                               onClick={() => {
                                 setRemarkTenant(tenant);
                                 setRemarkText(tenant.remark || '');
-                                setIsEditingRemark(!tenant.remark); // auto‐open edit if no remark
+                                setIsEditingRemark(!tenant.remark);
                                 setOpenRemarkDialog(true);
                               }}
                               titleAccess={tenant.remark ? 'View remark' : 'Add remark'}
+                              className={`cursor-pointer text-xl ${
+                                tenant.remark
+                                  ? 'text-green-600 hover:text-green-800'   // color when there _is_ a remark
+                                  : 'text-blue-600 hover:text-gray-800'      // color when there _isn’t_
+                              }`}
                             />
                           </td>
+
 
                           <td className="px-0 mb:px-2 mb:py-2 tb:px-3 tb:py-3 font-xl text-sm tracking-wide border border-blue-900">
                             <EventNoteIcon

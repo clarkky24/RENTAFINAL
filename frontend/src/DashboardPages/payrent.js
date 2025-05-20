@@ -347,6 +347,7 @@ const [roomNumber, setRoomNumber] = useState('');
                   onChange={(e) => setFormEmail(e.target.value)}
                   placeholder="Enter your email"
                   required
+                  readOnly
                   className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
                 />
               </div>

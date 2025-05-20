@@ -6,7 +6,12 @@ import {
   CardContent,
   Typography,
   Button,
-  IconButton
+  IconButton,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  TextField,
 } from '@mui/material';
 import ApartmentIcon from '@mui/icons-material/Apartment';
 import axios from 'axios';
@@ -16,7 +21,9 @@ import { Link } from 'react-router-dom';
 const AvailRoom = () => {
   const [rooms, setRooms] = useState([]);
   const [selectedBuilding, setSelectedBuilding] = useState(null);
-  const [showAvailableOnly, setShowAvailableOnly] = useState(false);
+  const [filterStatus, setFilterStatus] = useState('all');   // 'all' | 'available' | 'rented'
+  const [filterFloor, setFilterFloor]   = useState('');      // '' or '1','2',...
+  const [searchTerm, setSearchTerm]     = useState('');      // text to match in roomNumber
 
   useEffect(() => {
     const fetchTenantData = async () => {
@@ -31,9 +38,9 @@ const AvailRoom = () => {
 
         const roomsData = allRooms.flatMap(building =>
           Array.from({ length: building.totalRooms }, (_, i) => {
-            const floorNumber = Math.floor(i / 10) + 1;
+            const floorNumber  = Math.floor(i / 10) + 1;
             const roomPosition = (i % 10) + 1;
-            const roomNumber = `${floorNumber}${String(roomPosition).padStart(2, '0')}`;
+            const roomNumber   = `${floorNumber}${String(roomPosition).padStart(2, '0')}`;
             const tenant = tenants.find(
               t =>
                 t.roomNumber === roomNumber &&
@@ -63,20 +70,31 @@ const AvailRoom = () => {
   }, []);
 
   const handleBuildingClick = building => {
-    setSelectedBuilding(prev =>
-      prev === building ? null : building
-    );
-    setShowAvailableOnly(false);
+    setSelectedBuilding(prev => prev === building ? null : building);
+    setFilterStatus('all');
+    setFilterFloor('');
+    setSearchTerm('');
   };
 
-  // Rooms in the selected building...
-  const filteredRooms = rooms.filter(
-    room => room.property === selectedBuilding
-  );
-  // ...and if toggled, only the available ones
-  const displayedRooms = showAvailableOnly
-    ? filteredRooms.filter(room => !room.isRented)
-    : filteredRooms;
+  // compute rooms of the selected building
+  const forBuilding = rooms.filter(r => r.property === selectedBuilding);
+
+  // apply status filter
+  const byStatus = forBuilding.filter(room => {
+    if (filterStatus === 'all')       return true;
+    if (filterStatus === 'available') return !room.isRented;
+    return room.isRented;  // 'rented'
+  });
+
+  // apply floor filter (roomNumber starts with floor digit)
+  const byFloor = filterFloor
+    ? byStatus.filter(r => r.roomNumber.startsWith(filterFloor))
+    : byStatus;
+
+  // apply search filter
+  const displayedRooms = searchTerm
+    ? byFloor.filter(r => r.roomNumber.includes(searchTerm))
+    : byFloor;
 
   return (
     <Box className="px-16 py-8 bg-blue-50 min-h-screen w-full">
@@ -88,12 +106,8 @@ const AvailRoom = () => {
 
       <Grid container spacing={4} justifyContent="center">
         {['Lalaine', 'Jade'].map(building => {
-          const totalRooms = rooms.filter(
-            r => r.property === building
-          ).length;
-          const availableRooms = rooms.filter(
-            r => r.property === building && !r.isRented
-          ).length;
+          const totalRooms = rooms.filter(r => r.property === building).length;
+          const availableRooms = rooms.filter(r => r.property === building && !r.isRented).length;
 
           return (
             <Grid item xs={12} sm={6} md={4} key={building}>
@@ -170,26 +184,54 @@ const AvailRoom = () => {
             {selectedBuilding} Building - Room Details
           </Typography>
 
+          {/* ────── Filter controls ────── */}
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 2,
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              mb: 4
+            }}
+          >
+            <FormControl variant="outlined" size="small">
+              <InputLabel>Status</InputLabel>
+              <Select
+                value={filterStatus}
+                onChange={e => setFilterStatus(e.target.value)}
+                label="Status"
+              >
+                <MenuItem value="all">All</MenuItem>
+                <MenuItem value="available">Available</MenuItem>
+                <MenuItem value="rented">Rented</MenuItem>
+              </Select>
+            </FormControl>
 
-          
-{/* Modern-looking toggle button with Tailwind CSS */}
-<div className="flex justify-center mb-6">
-  <button
-    type="button"
-    onClick={() => setShowAvailableOnly(v => !v)}
-    className={`
-      inline-flex items-center px-6 py-3 font-semibold rounded-full shadow-lg transition-all duration-300
-      ${
-        showAvailableOnly
-          ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-transparent hover:from-blue-600 hover:to-indigo-600'
-          : 'bg-white text-blue-600 border-2 border-blue-600 hover:bg-blue-50'
-      }
-    `}
-  >
-    {showAvailableOnly ? 'Showing Available Only' : 'Show Available Only'}
-  </button>
-</div>
+            <FormControl variant="outlined" size="small">
+              <InputLabel>Floor</InputLabel>
+              <Select
+                value={filterFloor}
+                onChange={e => setFilterFloor(e.target.value)}
+                label="Floor"
+              >
+                <MenuItem value="">All</MenuItem>
+                {[...new Set(forBuilding.map(r => r.roomNumber.charAt(0)))]
+                  .sort()
+                  .map(f => (
+                    <MenuItem key={f} value={f}>{f}</MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
 
+            <TextField
+              size="small"
+              label="Search Room"
+              placeholder="e.g. 102"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+            />
+          </Box>
+          {/* ──────────────────────────────── */}
 
           <Grid container spacing={3} justifyContent="center">
             {displayedRooms.map(room => (

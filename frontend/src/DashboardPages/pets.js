@@ -623,6 +623,9 @@ useEffect(() => {
                   required
                   fullWidth
                   variant="outlined"
+                  InputProps={{
+                    readOnly: true,
+                  }}
                 />
 
                 <TextField
